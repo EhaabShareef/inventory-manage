@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  username  String   @unique
+  email     String?    @unique
+  password  String
+  role      Role      @default(VIEW)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  AuditLog  AuditLog[]
+}
+
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  items     Item[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Item {
+  id             Int       @id @default(autoincrement())
+  partNo         String?
+  itemName       String
+  model          String?
+  category       Category  @relation(fields: [categoryId], references: [id])
+  categoryId     Int
+  listPrice      Decimal   @db.Decimal(10, 2)
+  sellingPrice   Decimal   @db.Decimal(10, 2)
+  amcPrice       Decimal?   @db.Decimal(10, 2)
+  nonAmcPrice    Decimal?   @db.Decimal(10, 2)
+  priceValidTill DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  action    String
+  details   String   @db.Text
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  VIEW
+  MANAGE
+}
