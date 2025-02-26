@@ -18,7 +18,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto">
       <h1 className="text-3xl font-semibold mb-6">Welcome, {stats.currentUser.username}</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
         <Card className="col-span-1 md:col-span-3 lg:col-span-4 bg-yellow-100">

@@ -9,8 +9,8 @@ datasource db {
 
 model User {
   id        Int       @id @default(autoincrement())
-  username  String   @unique
-  email     String?    @unique
+  username  String    @unique
+  email     String?   @unique
   password  String
   role      Role      @default(VIEW)
   createdAt DateTime  @default(now())
@@ -35,11 +35,12 @@ model Item {
   categoryId     Int
   listPrice      Decimal   @db.Decimal(10, 2)
   sellingPrice   Decimal   @db.Decimal(10, 2)
-  amcPrice       Decimal?   @db.Decimal(10, 2)
-  nonAmcPrice    Decimal?   @db.Decimal(10, 2)
+  amcPrice       Decimal?  @db.Decimal(10, 2)
+  nonAmcPrice    Decimal?  @db.Decimal(10, 2)
   priceValidTill DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+  quotes         QuoteItem[]
 }
 
 model AuditLog {
@@ -51,7 +52,67 @@ model AuditLog {
   createdAt DateTime @default(now())
 }
 
+model Client {
+  id                Int      @id @default(autoincrement())
+  companyName       String?
+  resortName        String   @unique
+  gstTinNo         String?  @unique
+  itContact        String?
+  designation      String?
+  resortContact    String?
+  mobileNo         String?
+  email            String?
+  atoll            String?
+  maleOfficeAddress String?  @db.Text
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  quotes           Quote[]
+}
+
+model Quote {
+  id            Int           @id @default(autoincrement())
+  client        Client        @relation(fields: [resortName], references: [resortName])
+  resortName    String
+  quotedDate    DateTime      @default(now())
+  quoteCategory QuoteCategory
+  nextFollowUp  DateTime      @default(dbgenerated("DATE_ADD(NOW(), INTERVAL 5 DAY)"))
+  status        QuoteStatus   @default(QUOTED)
+  remarks       String?       @db.Text
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  items         QuoteItem[]
+}
+
+model QuoteItem {
+  id       Int     @id @default(autoincrement())
+  quote    Quote   @relation(fields: [quoteId], references: [id])
+  quoteId  Int
+  item     Item    @relation(fields: [itemId], references: [id])
+  itemId   Int
+  amount   Decimal @db.Decimal(10, 2)
+
+  @@unique([quoteId, itemId])
+}
+
 enum Role {
   VIEW
   MANAGE
+}
+
+enum QuoteStatus {
+  QUOTED
+  FOLLOW_UP
+  CONFIRMED
+  CANCELLED
+  BUDGETORY
+  UNDECIDED
+}
+
+enum QuoteCategory {
+  PMS
+  POS
+  BACK_OFFICE
+  HARDWARE
+  LICENSE
+  OTHERS
 }

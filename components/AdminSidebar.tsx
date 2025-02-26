@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Package, List, Users, LogOut, Activity } from 'lucide-react'
+import { Home, Package, List, Users, LogOut, Activity, Briefcase, FileText, BarChart } from 'lucide-react'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { logout } from '@/actions/auth'
@@ -11,8 +11,11 @@ const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: Home },
   { href: '/admin/item', label: 'Items', icon: Package },
   { href: '/admin/category', label: 'Categories', icon: List },
+  { href: '/admin/client', label: 'Clients', icon: Briefcase },
+  { href: '/admin/quote', label: 'Invoices', icon: FileText },
   { href: '/admin/user', label: 'Users', icon: Users },
   { href: '/admin/audit-logs', label: 'Activity', icon: Activity },
+  { href: '/admin/reporting', label: 'Reporting', icon: BarChart },
 ]
 
 export function AdminSidebar() {
@@ -44,7 +47,7 @@ export function AdminSidebar() {
       <div className="p-4">
         <Button 
           variant="outline" 
-          className="w-full text-secondary bg-primary border-none md:border-white hover:bg-red-10 hover:text-red-500 hover:border-red-500"
+          className="text-secondary bg-primary border-none md:border-white hover:bg-red-10 hover:text-red-500 hover:border-red-500"
           onClick={() => logout()}
         >
           <LogOut className="h-4 w-4 md:mr-2" />

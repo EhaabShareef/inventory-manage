@@ -17,7 +17,7 @@ export function ItemSearch({ searchTerm, onSearchChange, selectedCategory, onCat
         placeholder="Search items..." 
         value={searchTerm}
         onChange={(e) => onSearchChange(e.target.value)}
-        className="flex-grow"
+        className="w-[500px]"
       />
       <Select value={selectedCategory} onValueChange={onCategoryChange}>
         <SelectTrigger className="w-[180px]">

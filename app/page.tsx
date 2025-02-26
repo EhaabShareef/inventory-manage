@@ -34,7 +34,7 @@ export default function LoginPage() {
       <Card className="w-[400px] shadow-lg border-none">
         <CardHeader className="space-y-1">
           <div className="flex justify-center mb-4">
-            <img src="/logo.jpeg" alt="HTM Logo" className="w-24 h-24" />
+            <img src="/logo.svg" alt="HTM Logo" className="w-24 h-24" />
           </div>
           <CardTitle className="text-2xl text-center">HTM Inventory Manager</CardTitle>
           <CardDescription className="text-center">Enter your credentials to login</CardDescription>
