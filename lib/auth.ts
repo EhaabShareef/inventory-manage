@@ -1,30 +1,40 @@
-import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcrypt'
+import { cookies } from 'next/headers'
 import jwt from 'jsonwebtoken'
+import { prisma } from '@/lib/prisma'
 
-const prisma = new PrismaClient()
+export type CurrentUser = {
+  id: number
+  username: string
+  email: string | null
+  role: string
+} | null
 
-export async function authenticateUser(identifier: string, password: string) {
-  // Check if identifier is email or username
-  const user = await prisma.user.findFirst({
-    where: {
-      OR: [
-        { email: identifier },
-        { username: identifier }
-      ]
+export async function getCurrentUser(): Promise<CurrentUser> {
+  try {
+    const cookieStore = cookies()
+    const token = (await cookieStore).get('token')?.value
+
+    if (!token) {
+      return null
     }
-  })
-  
-  if (!user) return null
 
-  const passwordMatch = await bcrypt.compare(password, user.password)
-  if (!passwordMatch) return null
+    const jwtSecret = process.env.JWT_SECRET
+    if (!jwtSecret) {
+      console.error('JWT_SECRET is not set')
+      return null
+    }
 
-  const token = jwt.sign(
-    { userId: user.id, role: user.role },
-    process.env.JWT_SECRET!,
-    { expiresIn: '1d' }
-  )
+    const decoded = jwt.verify(token, jwtSecret) as { userId: number }
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, username: true, email: true, role: true }
+    })
 
-  return { user, token }
+    return user
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Error in getCurrentUser: ", error.stack)
+    }
+    return null
+  }
 }

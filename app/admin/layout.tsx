@@ -2,6 +2,7 @@ import { AdminSidebar } from '@/components/AdminSidebar'
 import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { getCurrentUser } from '@/actions/auth'
 import { redirect } from 'next/navigation'
+import { Toaster } from "@/components/ui/sonner"
 
 export default async function AdminLayout({
   children,
@@ -28,6 +29,7 @@ export default async function AdminLayout({
             {children}
           </div>
         </main>
+        <Toaster />
       </div>
     </div>
   )
