@@ -26,3 +26,5 @@ export function convertPrismaCategoryToCategory(prismaCategory: PrismaCategory):
     updatedAt: prismaCategory.updatedAt,
   }
 }
+
+/* PLEASE NO LONGER USE THIS OTHER THAN IN QUOTES - MAKES LIFE HARDER THAN IT SHOULD BE */
