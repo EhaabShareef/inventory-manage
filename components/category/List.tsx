@@ -16,20 +16,20 @@ export function CategoryList({ categories, onUpdate, onDelete }: CategoryListPro
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[100px]">ID</TableHead>
+            <TableHead className="whitespace-nowrap">ID</TableHead>
             <TableHead>Name</TableHead>
-            <TableHead className="w-[150px] text-right">Item Count</TableHead>
-            <TableHead className="w-[200px] text-right">Created At</TableHead>
-            <TableHead className="w-[200px] text-right">Updated At</TableHead>
-            <TableHead className="w-[150px] text-center">Actions</TableHead>
+            <TableHead className="whitespace-nowrap text-right">Item Count</TableHead>
+            <TableHead className="whitespace-nowrap text-right">Created At</TableHead>
+            <TableHead className="whitespace-nowrap text-right">Updated At</TableHead>
+            <TableHead className="whitespace-nowrap text-center">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {categories.map((category) => (
             <TableRow key={category.id}>
-              <TableCell className="font-medium">{category.id}</TableCell>
-              <TableCell>{category.name}</TableCell>
-              <TableCell className="text-right">{category._count.items}</TableCell>
+              <TableCell className="font-medium whitespace-nowrap">{category.id}</TableCell>
+              <TableCell className="whitespace-nowrap">{category.name}</TableCell>
+              <TableCell className="text-right whitespace-nowrap">{category._count.items}</TableCell>
               <TableCell className="text-right whitespace-nowrap">{parseDate(category.createdAt)}</TableCell>
               <TableCell className="text-right whitespace-nowrap">{parseDate(category.updatedAt)}</TableCell>
               <TableCell>
