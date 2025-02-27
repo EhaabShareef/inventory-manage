@@ -1,23 +1,34 @@
-import { useState } from 'react'
+"use client"
+
+import type React from "react"
+
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus } from 'lucide-react'
+import { Plus } from "lucide-react"
 
 interface CategoryCreateDialogProps {
-  onCreate: (name: string) => void;
+  onCreate: (formData: FormData) => Promise<{ error?: string; errors?: Record<string, string[]> } | undefined>
 }
 
 export function CategoryCreateDialog({ onCreate }: CategoryCreateDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [newCategoryName, setNewCategoryName] = useState('')
+  const [errors, setErrors] = useState<Record<string, string[]>>({})
+  const formRef = useRef<HTMLFormElement>(null)
 
-  const handleCreate = () => {
-    if (newCategoryName.trim()) {
-      onCreate(newCategoryName.trim())
-      setNewCategoryName('')
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+
+    const result = await onCreate(formData)
+    if (result && result.errors) {
+      setErrors(result.errors)
+    } else {
       setIsOpen(false)
+      setErrors({})
+      formRef.current?.reset()
     }
   }
 
@@ -27,28 +38,31 @@ export function CategoryCreateDialog({ onCreate }: CategoryCreateDialogProps) {
         <Plus className="mr-2 h-4 w-4" /> Add Category
       </Button>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Create New Category</DialogTitle>
+            <DialogTitle className="text-2xl font-bold">New Category</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
+          <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-left font-medium">
+                Name <span className="text-destructive ml-0.5">*</span>
               </Label>
-              <Input
-                id="name"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                className="col-span-3"
-              />
+              <Input id="name" name="name" />
+              {errors.name &&
+                errors.name.map((error, index) => (
+                  <p key={index} className="text-xs text-destructive">
+                    {error}
+                  </p>
+                ))}
             </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit" onClick={handleCreate}>Create</Button>
-          </DialogFooter>
+
+            <DialogFooter>
+              <Button type="submit">Create</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </>
   )
 }
+

@@ -1,9 +1,7 @@
-// app/actions/item.ts
 "use server";
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { formatPrice, formatDate } from "@/lib/utils";
 import { Prisma } from "@prisma/client";
 import { itemSchema } from "@/schemas/item"
 import type { Item, Category, PrismaItem } from "@/types/item"
@@ -61,7 +59,7 @@ export async function getItems(
 export async function createItem(
   formData: FormData,
 ): Promise<{ item: Item } | { error: string; errors?: Record<string, string[]> }> {
-  // Parse the FormData into an object that matches our schema
+  
   const itemData = {
     partNo: formData.get("partNo") as string | null,
     itemName: formData.get("itemName") as string,

@@ -6,7 +6,7 @@ import { useDebounce } from "@/hooks/useDebounce"
 import { ItemList } from "@/components/item/List"
 import { ItemSearch } from "@/components/item/Search"
 import { ItemCreateDialog } from "@/components/item/Create"
-import type { Item, Category, ItemFormData } from "@/types/item"
+import type { Item, Category } from "@/types/item"
 import { toast } from "sonner"
 
 export default function ItemPage() {

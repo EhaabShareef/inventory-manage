@@ -16,11 +16,10 @@ export interface Item extends Omit<ItemFormData, "categoryId"> {
   updatedAt: Date
 }
 
-export interface PrismaItem extends Omit<Item, "listPrice" | "sellingPrice" | "amcPrice" | "nonAmcPrice"> {
+export interface PrismaItem extends Omit<Item, "listPrice" | "sellingPrice" | "amcPrice" | "nonAmcPrice" > {
   listPrice: Decimal
   sellingPrice: Decimal
   amcPrice: Decimal | null
   nonAmcPrice: Decimal | null
   categoryId: number
 }
-

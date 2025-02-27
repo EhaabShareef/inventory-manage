@@ -1,4 +1,5 @@
-import { PrismaItem, Item } from "@/types/inventory";
+import { PrismaItem, Item } from "@/types/item";
+import type { PrismaCategory, Category } from "@/types/category"
 
 export function convertPrismaItemToItem(prismaItem: PrismaItem): Item {
   return {
@@ -11,10 +12,17 @@ export function convertPrismaItemToItem(prismaItem: PrismaItem): Item {
     sellingPrice: prismaItem.sellingPrice.toNumber(),
     amcPrice: prismaItem.amcPrice?.toNumber() ?? null,
     nonAmcPrice: prismaItem.nonAmcPrice?.toNumber() ?? null,
-    priceValidTill: prismaItem.priceValidTill?.toISOString() ?? null,
+    priceValidTill: prismaItem.priceValidTill ?? null,
     createdAt: prismaItem.createdAt,
     updatedAt: prismaItem.updatedAt,
   };
 }
 
-// Add other converter functions here as needed for different modules
+export function convertPrismaCategoryToCategory(prismaCategory: PrismaCategory): Category {
+  return {
+    id: prismaCategory.id,
+    name: prismaCategory.name,
+    createdAt: prismaCategory.createdAt,
+    updatedAt: prismaCategory.updatedAt,
+  }
+}

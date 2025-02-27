@@ -23,29 +23,18 @@ export function formatPrice(price: number | string | Prisma.Decimal | null | und
   throw new Error('Invalid price format')
 }
 
-export function formatDate(date: Date | string | null | undefined): Date | null {
-  if (date === null || date === undefined) {
-    return null
-  }
-  if (typeof date === 'string') {
-    return new Date(date)
-  }
-  if (date instanceof Date) {
-    return date
-  }
-  throw new Error('Invalid date format')
-}
-
 export const parsePrice = (price: number | null): string => {
   return price !== null ? price.toFixed(2) : 'N/A';
 };
 
 export function parseDate(date: Date): string {
-  return new Date(date).toLocaleString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  const d = new Date(date)
+
+  const day = d.getDate().toString().padStart(2, "0")
+  const month = d.toLocaleString("en-US", { month: "short" }).toUpperCase()
+  const year = d.getFullYear()
+  const hours = d.getHours().toString().padStart(2, "0")
+  const minutes = d.getMinutes().toString().padStart(2, "0")
+
+  return `${day}-${month}-${year} ${hours}:${minutes}`
 }
