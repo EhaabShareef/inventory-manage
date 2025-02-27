@@ -1,28 +1,20 @@
-export interface Client {
-    id: number;
-    companyName: string | null;
-    resortName: string;
-    gstTinNo: string | null;
-    itContact: string | null;
-    designation: string | null;
-    resortContact: string | null;
-    mobileNo: string | null;
-    email: string | null;
-    atoll: string | null;
-    maleOfficeAddress: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-  }
-  
-  export interface ClientFormData {
-    companyName?: string;
-    resortName: string;
-    gstTinNo?: string;
-    itContact?: string;
-    designation?: string;
-    resortContact?: string;
-    mobileNo?: string;
-    email?: string;
-    atoll?: string;
-    maleOfficeAddress?: string;
-  }
+import type { z } from "zod"
+import type { clientSchema } from "@/schemas/client"
+import type { Quote } from "./quote"
+
+export type ClientFormData = z.infer<typeof clientSchema>
+
+export interface Client extends ClientFormData {
+  id: number
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface PrismaClient extends Omit<Client, "createdAt" | "updatedAt"> {
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface ClientWithQuotes extends Client {
+  quotes: Quote[]
+}
