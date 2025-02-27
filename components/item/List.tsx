@@ -21,11 +21,7 @@ interface ItemListProps {
   onDelete: (id: number) => void;
 }
 
-export function ItemList({
-  items,
-  categories,
-  onDelete,
-}: ItemListProps) {
+export function ItemList({ items, categories, onDelete }: ItemListProps) {
   const isPriceExpired = (priceValidTill: Date | null) => {
     if (!priceValidTill) return false;
     const validDate = new Date(priceValidTill);
@@ -33,10 +29,20 @@ export function ItemList({
     return validDate < currentDate;
   };
 
-  const formatDate = (dateString: Date | null) => {
+  const formatDate = (dateString: Date | null): string => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return isNaN(date.getTime()) ? "Invalid Date" : date.toLocaleString();
+    if (isNaN(date.getTime())) return "Invalid Date";
+
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = date
+      .toLocaleString("en-US", { month: "short" })
+      .toUpperCase();
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
   };
 
   return (
