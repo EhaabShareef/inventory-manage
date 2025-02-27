@@ -81,6 +81,7 @@ model Quote {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   items         QuoteItem[]
+  followUps     QuoteFollowUp[]
 }
 
 model QuoteItem {
@@ -92,6 +93,17 @@ model QuoteItem {
   amount   Decimal @db.Decimal(10, 2)
 
   @@unique([quoteId, itemId])
+}
+
+model QuoteFollowUp {
+  id           Int      @id @default(autoincrement())
+  quote        Quote    @relation(fields: [quoteId], references: [id])
+  quoteId      Int
+  actionDate   DateTime @default(now())
+  actionTaken  String
+  notes        String?  @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 enum Role {

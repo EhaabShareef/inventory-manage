@@ -1,86 +1,28 @@
-"use server";
+"use server"
 
-import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
-import {
-  Quote,
-  QuoteFormData,
-  QuoteStatus,
-  QuoteCategory,
-} from "@/types/quote";
-import { getCurrentUser } from "./auth";
-import { Prisma } from "@prisma/client";
-import { formatPrice, formatDate, parsePrice } from "@/lib/utils";
-
-async function logActivity(action: string, details: string) {
-  const currentUser = await getCurrentUser();
-  if (!currentUser) {
-    console.error("No current user found for activity logging");
-    return;
-  }
-
-  await prisma.auditLog.create({
-    data: {
-      action,
-      details,
-      userId: currentUser.id,
-    },
-  });
-}
-
-function convertPrismaQuoteToQuote(
-  prismaQuote: Prisma.QuoteGetPayload<{
-    include: {
-      client: true;
-      items: { include: { item: { include: { category: true } } } };
-    };
-  }>
-): Quote {
-  return {
-    ...prismaQuote,
-    items: prismaQuote.items.map((item) => ({
-      ...item,
-      amount: parseFloat(parsePrice(item.amount.toNumber())),
-      item: {
-        ...item.item,
-        listPrice: parseFloat(parsePrice(item.item.listPrice.toNumber())),
-        sellingPrice: parseFloat(parsePrice(item.item.sellingPrice.toNumber())),
-        amcPrice: item.item.amcPrice
-          ? parseFloat(parsePrice(item.item.amcPrice.toNumber()))
-          : null,
-        nonAmcPrice: item.item.nonAmcPrice
-          ? parseFloat(parsePrice(item.item.nonAmcPrice.toNumber()))
-          : null,
-        category: item.item.category,
-        priceValidTill: item.item.priceValidTill
-          ? item.item.priceValidTill.toISOString()
-          : null,
-      },
-    })),
-  };
-}
+import { prisma } from "@/lib/prisma"
+import { revalidatePath } from "next/cache"
+import type { Quote, QuoteCategory } from "@/types/quote"
+import type { Prisma, QuoteStatus } from "@prisma/client"
+import { logActivity } from "@/lib/audit-logger"
+import { quoteFormSchema, type QuoteFormData } from "@/schemas/quote"
+import { convertPrismaQuoteToQuote } from "@/lib/converters"
 
 export async function getQuotes(
-  search: string = "",
+  search = "",
   category: QuoteCategory | null | undefined,
-  page: number = 1,
-  pageSize: number = 10
-): Promise<
-  | { quotes: Quote[]; totalCount: number; totalPages: number }
-  | { error: string }
-> {
+  page = 1,
+  pageSize = 10,
+): Promise<{ quotes: Quote[]; totalCount: number; totalPages: number } | { error: string }> {
   try {
     const where: Prisma.QuoteWhereInput = {
       AND: [
         category ? { quoteCategory: category } : {},
         {
-          OR: [
-            { resortName: { contains: search } },
-            { client: { companyName: { contains: search } } },
-          ],
+          OR: [{ resortName: { contains: search } }, { client: { companyName: { contains: search } } }],
         },
       ],
-    };
+    }
 
     const [prismaQuotes, totalCount] = await Promise.all([
       prisma.quote.findMany({
@@ -102,39 +44,43 @@ export async function getQuotes(
         take: pageSize,
       }),
       prisma.quote.count({ where }),
-    ]);
+    ])
 
-    const quotes = prismaQuotes.map(convertPrismaQuoteToQuote);
+    const quotes = prismaQuotes.map(convertPrismaQuoteToQuote)
 
     return {
       quotes,
       totalCount,
       totalPages: Math.ceil(totalCount / pageSize),
-    };
+    }
   } catch (error) {
-    console.error("Failed to fetch quotes:", error);
-    return { error: "Failed to fetch quotes" };
+    console.error("Failed to fetch quotes:", error)
+    return { error: "Failed to fetch quotes" }
   }
 }
 
-export async function createQuote(
-  data: QuoteFormData
-): Promise<{ quote: Quote } | { error: string }> {
+export async function createQuote(data: QuoteFormData): Promise<{ quote: Quote } | { error: string }> {
+  const validationResult = quoteFormSchema.safeParse(data)
+
+  if (!validationResult.success) {
+    return { error: "Validation failed: " + validationResult.error.message }
+  }
+
+  const validatedData = validationResult.data
+
   try {
     const prismaQuote = await prisma.quote.create({
       data: {
-        resortName: data.resortName,
-        quotedDate: formatDate(data.quotedDate) || new Date(),
-        quoteCategory: data.quoteCategory,
-        nextFollowUp:
-          formatDate(data.nextFollowUp) ||
-          new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-        status: data.status || "QUOTED",
-        remarks: data.remarks || null,
+        resortName: validatedData.resortName,
+        quotedDate: new Date(validatedData.quotedDate),
+        quoteCategory: validatedData.quoteCategory,
+        nextFollowUp: new Date(validatedData.nextFollowUp),
+        status: validatedData.status,
+        remarks: validatedData.remarks,
         items: {
-          create: data.items.map((item) => ({
+          create: validatedData.items.map((item) => ({
             itemId: item.itemId,
-            amount: formatPrice(item.amount),
+            amount: item.amount,
           })),
         },
       },
@@ -150,37 +96,42 @@ export async function createQuote(
           },
         },
       },
-    });
+    })
 
-    const quote = convertPrismaQuoteToQuote(prismaQuote);
+    const quote = convertPrismaQuoteToQuote(prismaQuote)
 
-    await logActivity(
-      "QUOTE_CREATED",
-      `New quote created for ${quote.resortName} (ID: ${quote.id})`
-    );
+    await logActivity("QUOTE_CREATED", `New quote created for ${quote.resortName} (ID: ${quote.id})`)
 
-    revalidatePath("/admin/quote");
-    return { quote };
+    revalidatePath("/admin/quote")
+    return { quote }
   } catch (error) {
-    console.error("Failed to create quote:", error);
-    return { error: "Failed to create quote" };
+    console.error("Failed to create quote:", error)
+    return { error: "Failed to create quote" }
   }
 }
 
 export async function updateQuote(id: number, data: QuoteFormData): Promise<{ success: true } | { error: string }> {
+  const validationResult = quoteFormSchema.safeParse(data)
+
+  if (!validationResult.success) {
+    return { error: "Validation failed: " + validationResult.error.message }
+  }
+
+  const validatedData = validationResult.data
+
   try {
     const updatedQuote = await prisma.quote.update({
       where: { id },
       data: {
-        resortName: data.resortName,
-        quotedDate: data.quotedDate ? new Date(data.quotedDate) : undefined,
-        quoteCategory: data.quoteCategory,
-        nextFollowUp: data.nextFollowUp ? new Date(data.nextFollowUp) : undefined,
-        status: data.status,
-        remarks: data.remarks || null,
+        resortName: validatedData.resortName,
+        quotedDate: new Date(validatedData.quotedDate),
+        quoteCategory: validatedData.quoteCategory,
+        nextFollowUp: new Date(validatedData.nextFollowUp),
+        status: validatedData.status,
+        remarks: validatedData.remarks,
         items: {
           deleteMany: {},
-          create: data.items.map((item) => ({
+          create: validatedData.items.map((item) => ({
             itemId: item.itemId,
             amount: item.amount,
           })),
@@ -188,7 +139,7 @@ export async function updateQuote(id: number, data: QuoteFormData): Promise<{ su
       },
     })
 
-    await logActivity("QUOTE_UPDATED", `Quote updated for ${updatedQuote.resortName} (ID: ${id})`)
+    await logActivity("QUOTE_UPDATED", `Quote updated for ${updatedQuote.resortName} (ID: ${updatedQuote.id})`)
 
     revalidatePath("/admin/quote")
     return { success: true }
@@ -198,54 +149,12 @@ export async function updateQuote(id: number, data: QuoteFormData): Promise<{ su
   }
 }
 
-
-export async function updateQuoteStatus(
-  id: number,
-  status: QuoteStatus
-): Promise<{ quote: Quote } | { error: string }> {
-  try {
-    const prismaQuote = await prisma.quote.update({
-      where: { id },
-      data: { status },
-      include: {
-        client: true,
-        items: {
-          include: {
-            item: {
-              include: {
-                category: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    const quote = convertPrismaQuoteToQuote(prismaQuote);
-
-    await logActivity(
-      "QUOTE_STATUS_UPDATED",
-      `Quote status updated to ${status} for ${quote.resortName} (ID: ${quote.id})`
-    );
-
-    revalidatePath("/admin/quote");
-    return { quote };
-  } catch (error) {
-    console.error("Failed to update quote status:", error);
-    return { error: "Failed to update quote status" };
-  }
-}
-
 export async function deleteQuote(id: number): Promise<{ success: true } | { error: string }> {
   try {
-    await prisma.quoteItem.deleteMany({
-      where: { quoteId: id },
-    })
-
     const quote = await prisma.quote.delete({
       where: { id },
       include: {
-        client: true,
+        items: true,
       },
     })
 
@@ -259,9 +168,7 @@ export async function deleteQuote(id: number): Promise<{ success: true } | { err
   }
 }
 
-export async function getQuoteById(
-  id: number
-): Promise<{ quote: Quote } | { error: string }> {
+export async function getQuoteById(id: number): Promise<{ quote: Quote } | { error: string }> {
   try {
     const prismaQuote = await prisma.quote.findUnique({
       where: { id },
@@ -277,14 +184,53 @@ export async function getQuoteById(
           },
         },
       },
-    });
+    })
+
     if (!prismaQuote) {
-      return { error: "Quote not found" };
+      return { error: "Quote not found" }
     }
-    const quote = convertPrismaQuoteToQuote(prismaQuote);
-    return { quote };
+
+    const quote = convertPrismaQuoteToQuote(prismaQuote)
+    return { quote }
   } catch (error) {
-    console.error("Failed to fetch quote:", error);
-    return { error: "Failed to fetch quote" };
+    console.error("Failed to fetch quote:", error)
+    return { error: "Failed to fetch quote" }
+  }
+}
+
+export async function updateQuoteStatus(
+  id: number,
+  status: QuoteStatus,
+): Promise<{ quote: Quote } | { error: string }> {
+  try {
+    const updatedPrismaQuote = await prisma.quote.update({
+      where: { id },
+      data: { status },
+      include: {
+        client: true,
+        items: {
+          include: {
+            item: {
+              include: {
+                category: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    const updatedQuote = convertPrismaQuoteToQuote(updatedPrismaQuote)
+
+    await logActivity(
+      "QUOTE_STATUS_UPDATED",
+      `Quote status updated for ${updatedQuote.resortName} (ID: ${updatedQuote.id}) to ${status}`,
+    )
+
+    revalidatePath("/admin/quote")
+    return { quote: updatedQuote }
+  } catch (error) {
+    console.error("Failed to update quote status:", error)
+    return { error: "Failed to update quote status" }
   }
 }

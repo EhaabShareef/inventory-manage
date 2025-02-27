@@ -6,17 +6,17 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { getItems } from "@/actions/item"
-import type { Item } from "@/types/inventory"
-import type { QuoteFormData } from "@/types/quote"
+import type { Item } from "@/types/item"
+import type { QuoteFormData, QuoteItemFormData } from "@/types/quote"
 
 interface ItemSelectorProps {
-  onItemsChange: (items: { itemId: number; amount: number }[]) => void
+  onItemsChange: (items: QuoteItemFormData[]) => void
   quoteData: QuoteFormData
 }
 
 export function ItemSelector({ onItemsChange, quoteData }: ItemSelectorProps) {
   const [items, setItems] = useState<Item[]>([])
-  const [selectedItems, setSelectedItems] = useState<(Item & { amount: number })[]>([])
+  const [selectedItems, setSelectedItems] = useState<QuoteItemFormData[]>(quoteData.items)
 
   useEffect(() => {
     fetchItems()
@@ -31,7 +31,7 @@ export function ItemSelector({ onItemsChange, quoteData }: ItemSelectorProps) {
 
   const handleAddItem = () => {
     if (items.length > 0) {
-      setSelectedItems([...selectedItems, { ...items[0], amount: 0 }])
+      setSelectedItems([...selectedItems, { itemId: items[0].id, amount: 0, itemName: items[0].itemName }])
     }
   }
 
@@ -40,11 +40,12 @@ export function ItemSelector({ onItemsChange, quoteData }: ItemSelectorProps) {
     if (item) {
       const newSelectedItems = [...selectedItems]
       newSelectedItems[index] = {
-        ...item,
+        itemId: item.id,
         amount: newSelectedItems[index]?.amount || 0,
+        itemName: item.itemName,
       }
       setSelectedItems(newSelectedItems)
-      onItemsChange(newSelectedItems.map(({ id, amount }) => ({ itemId: id, amount })))
+      onItemsChange(newSelectedItems)
     }
   }
 
@@ -52,10 +53,10 @@ export function ItemSelector({ onItemsChange, quoteData }: ItemSelectorProps) {
     const newSelectedItems = [...selectedItems]
     newSelectedItems[index].amount = amount
     setSelectedItems(newSelectedItems)
-    onItemsChange(newSelectedItems.map(({ id, amount }) => ({ itemId: id, amount })))
+    onItemsChange(newSelectedItems)
   }
 
-  const formatDate = (date: string | null) => {
+  const formatDate = (date: Date | null | undefined) => {
     return date ? new Date(date).toLocaleDateString() : "N/A"
   }
 
@@ -102,7 +103,7 @@ export function ItemSelector({ onItemsChange, quoteData }: ItemSelectorProps) {
             <TableRow key={index}>
               <TableCell>
                 <Select
-                  value={item.id.toString()}
+                  value={item.itemId.toString()}
                   onValueChange={(value) => handleItemChange(index, Number.parseInt(value))}
                 >
                   <SelectTrigger className="w-[250px]">
@@ -117,13 +118,13 @@ export function ItemSelector({ onItemsChange, quoteData }: ItemSelectorProps) {
                   </SelectContent>
                 </Select>
               </TableCell>
-              <TableCell>{item.partNo}</TableCell>
-              <TableCell>{item.category.name}</TableCell>
-              <TableCell>{item.listPrice}</TableCell>
-              <TableCell>{item.sellingPrice}</TableCell>
-              <TableCell>{item.amcPrice || "N/A"}</TableCell>
-              <TableCell>{item.nonAmcPrice || "N/A"}</TableCell>
-              <TableCell>{formatDate(item.priceValidTill)}</TableCell>
+              <TableCell>{item.itemName}</TableCell>
+              <TableCell>{items.find(i => i.id === item.itemId)?.category.name || "N/A"}</TableCell>
+              <TableCell>{items.find(i => i.id === item.itemId)?.listPrice || "N/A"}</TableCell>
+              <TableCell>{items.find(i => i.id === item.itemId)?.sellingPrice || "N/A"}</TableCell>
+              <TableCell>{items.find(i => i.id === item.itemId)?.amcPrice || "N/A"}</TableCell>
+              <TableCell>{items.find(i => i.id === item.itemId)?.nonAmcPrice || "N/A"}</TableCell>
+              <TableCell>{formatDate(items.find(i => i.id === item.itemId)?.priceValidTill)}</TableCell>
               <TableCell>
                 <Input
                   type="number"
@@ -143,4 +144,3 @@ export function ItemSelector({ onItemsChange, quoteData }: ItemSelectorProps) {
     </div>
   )
 }
-

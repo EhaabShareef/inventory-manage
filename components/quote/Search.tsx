@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { QuoteCategory } from "@/types/quote"
+import { QuoteCategory } from "@prisma/client"
 
 interface QuoteSearchProps {
   searchTerm: string

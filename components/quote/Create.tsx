@@ -1,18 +1,20 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { type QuoteFormData, QuoteCategory, QuoteStatus } from "@/types/quote"
+import type { QuoteFormData } from "@/types/quote"
+import { QuoteStatus, QuoteCategory } from "@prisma/client" // Import directly from Prisma
 import { createQuote } from "@/actions/quote"
 import { ItemSelector } from "./ItemSelector"
 import type { Client } from "@/types/client"
 import { getClients } from "@/actions/client"
+import { toast } from "sonner"
+import { quoteFormSchema } from "@/schemas/quote"
 
 interface QuoteCreateDialogProps {
   onQuoteCreated: () => void
@@ -66,18 +68,21 @@ export function QuoteCreateDialog({ onQuoteCreated }: QuoteCreateDialogProps) {
     if (step === 1) {
       setStep(2)
     } else {
-      const result = await createQuote(quoteData)
-      if ("quote" in result) {
-        onQuoteCreated()
-        handleClose()
+      const validationResult = quoteFormSchema.safeParse(quoteData)
+      if (validationResult.success) {
+        const result = await createQuote(validationResult.data)
+        if ("quote" in result) {
+          onQuoteCreated()
+          handleClose()
+        } else {
+          console.error(result.error)
+          toast.error("Failed to create quote", { description: result.error })
+        }
       } else {
-        console.error(result.error)
+        console.error(validationResult.error)
+        toast.error("Validation failed", { description: "Please check the form for errors" })
       }
     }
-  }
-
-  const handleItemsChange = (items: { itemId: number; amount: number }[]) => {
-    setQuoteData((prev) => ({ ...prev, items }))
   }
 
   const resetQuoteData = () => {

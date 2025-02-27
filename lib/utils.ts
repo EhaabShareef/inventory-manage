@@ -38,3 +38,4 @@ export function parseDate(date: Date): string {
 
   return `${day}-${month}-${year} ${hours}:${minutes}`
 }
+

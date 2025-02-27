@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,9 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { getItems } from "@/actions/item"
 import { updateQuote } from "@/actions/quote"
-import type { Item } from "@/types/inventory"
-import { QuoteStatus, QuoteCategory, type Quote, type QuoteFormData } from "@/types/quote"
+import type { Item } from "@/types/item"
+import { QuoteStatus, QuoteCategory } from "@prisma/client"
+import { quoteFormSchema, type Quote, type QuoteFormData } from "@/schemas/quote"
 import { Trash2 } from "lucide-react"
+import { toast } from "sonner"
 
 interface UpdateQuoteFormProps {
   quote: Quote
@@ -27,8 +28,13 @@ export function UpdateQuoteForm({ quote, onQuoteUpdated, onCancel }: UpdateQuote
     quoteCategory: quote.quoteCategory,
     nextFollowUp: quote.nextFollowUp.toISOString().split("T")[0],
     status: quote.status,
-    remarks: quote.remarks || undefined,
-    items: quote.items.map((item) => ({ itemId: item.itemId, amount: item.amount })),
+    remarks: quote.remarks || null,
+    items: quote.items.map((item) => ({
+      id: item.id,
+      itemId: item.itemId,
+      amount: item.amount,
+      itemName: item.itemName,
+    })),
   })
 
   useEffect(() => {
@@ -55,15 +61,22 @@ export function UpdateQuoteForm({ quote, onQuoteUpdated, onCancel }: UpdateQuote
     if (items.length > 0) {
       setQuoteData((prev) => ({
         ...prev,
-        items: [...prev.items, { itemId: items[0].id, amount: 0 }],
+        items: [...prev.items, { itemId: items[0].id, amount: 0, itemName: items[0].itemName }],
       }))
     }
   }
 
   const handleItemChange = (index: number, itemId: number) => {
-    const newItems = [...quoteData.items]
-    newItems[index] = { ...newItems[index], itemId }
-    setQuoteData((prev) => ({ ...prev, items: newItems }))
+    const item = items.find((i) => i.id === itemId)
+    if (item) {
+      const newItems = [...quoteData.items]
+      newItems[index] = {
+        ...newItems[index],
+        itemId: item.id,
+        itemName: item.itemName,
+      }
+      setQuoteData((prev) => ({ ...prev, items: newItems }))
+    }
   }
 
   const handleAmountChange = (index: number, amount: number) => {
@@ -81,15 +94,23 @@ export function UpdateQuoteForm({ quote, onQuoteUpdated, onCancel }: UpdateQuote
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const result = await updateQuote(quote.id, quoteData)
-    if ("success" in result) {
-      onQuoteUpdated()
+    const validationResult = quoteFormSchema.safeParse(quoteData)
+    if (validationResult.success) {
+      const result = await updateQuote(quote.id, validationResult.data)
+      if ("success" in result) {
+        onQuoteUpdated()
+        toast.success("Quote updated successfully")
+      } else {
+        console.error(result.error)
+        toast.error("Failed to update quote", { description: result.error })
+      }
     } else {
-      console.error(result.error)
+      console.error(validationResult.error)
+      toast.error("Validation failed", { description: "Please check the form for errors" })
     }
   }
 
-  const formatDate = (date: string | null | undefined) => {
+  const formatDate = (date: Date | null | undefined) => {
     if (!date) return "N/A"
     return new Date(date).toLocaleDateString()
   }

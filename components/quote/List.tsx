@@ -1,5 +1,5 @@
 import { useState } from "react"
-import type { Quote } from "@/types/quote"
+import type { QuoteWithClientAndItems as Quote } from "@/types/quote"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ChevronDown, ChevronUp, Edit } from "lucide-react"

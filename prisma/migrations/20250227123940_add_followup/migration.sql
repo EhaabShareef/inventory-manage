@@ -1,0 +1,18 @@
+-- AlterTable
+ALTER TABLE `quote` MODIFY `nextFollowUp` DATETIME(3) NOT NULL DEFAULT DATE_ADD(NOW(), INTERVAL 5 DAY);
+
+-- CreateTable
+CREATE TABLE `QuoteFollowUp` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `quoteId` INTEGER NOT NULL,
+    `actionDate` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `actionTaken` VARCHAR(191) NOT NULL,
+    `notes` TEXT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `QuoteFollowUp` ADD CONSTRAINT `QuoteFollowUp_quoteId_fkey` FOREIGN KEY (`quoteId`) REFERENCES `Quote`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -1,9 +1,11 @@
-import { useState } from 'react'
+"use client"
+
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { QuoteStatus } from '@/types/quote'
-import { updateQuoteStatus } from '@/actions/quote'
+import { QuoteStatus } from "@prisma/client"
+import { updateQuoteStatus } from "@/actions/quote"
 
 interface QuoteStatusUpdateProps {
   quoteId: number
@@ -21,7 +23,7 @@ export function QuoteStatusUpdate({ quoteId, currentStatus, onStatusUpdated }: Q
 
   const handleSubmit = async () => {
     const result = await updateQuoteStatus(quoteId, status)
-    if ('quote' in result) {
+    if ("quote" in result) {
       onStatusUpdated()
     } else {
       console.error(result.error)
@@ -58,3 +60,4 @@ export function QuoteStatusUpdate({ quoteId, currentStatus, onStatusUpdated }: Q
     </Dialog>
   )
 }
+
